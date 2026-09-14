@@ -33,7 +33,7 @@ SERVICE_NAME="uvm-panel"
 GITHUB_USERNAME="stripathi02123-tech"
 GITHUB_REPO_NAME="Uvm-panel"
 
-REPO_URL="https://github.com/${GITHUB_USERNAME}/${GITHUB_REPO_NAME}.git"
+REPO_URL="https://github.com/stripathi02123-tech/Uvm-panel.git"
 
 # ============================================================
 # HELPERS
