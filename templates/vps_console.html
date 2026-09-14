@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSH Terminal - {{ vps.container_name }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { color-scheme: dark; --page: #09090b; --bar: #111118; --line: #1f1f2e; --muted: #a1a1aa; --green: #10b981; --red: #ef4444; }
+        * { box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--page); color: #fff; font-family: "Segoe UI", sans-serif; }
+        .top-bar { height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; background: var(--bar); border-bottom: 1px solid var(--line); }
+        .left-section, .right-section, .title, .status-badge, .btn { display: flex; align-items: center; }
+        .left-section { min-width: 0; gap: 16px; }
+        .title { gap: 10px; min-width: 0; font-size: 16px; font-weight: 600; letter-spacing: .5px; }
+        .title i { color: #6366f1; font-size: 18px; }
+        .title span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .status-badge { gap: 6px; padding: 4px 10px; border: 1px solid rgba(16,185,129,.3); border-radius: 4px; background: rgba(16,185,129,.1); color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+        .status-badge.error { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.1); color: var(--red); }
+        .dot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+        .status-badge.error .dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+        .right-section { gap: 12px; }
+        .btn { gap: 8px; padding: 8px 16px; border: 1px solid #27272a; border-radius: 4px; background: transparent; color: var(--muted); font: 600 13px inherit; text-decoration: none; cursor: pointer; transition: .2s ease; }
+        .btn:hover { background: #27272a; color: #fff; }
+        .btn-danger { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.1); color: var(--red); }
+        .btn-danger:hover { background: var(--red); }
+        .terminal-container { width: 100%; height: calc(100vh - 60px); padding: 14px 18px 18px; background: #000; }
+        #terminalFrame { width: 100%; height: 100%; border: 1px solid #15151c; background: #000; }
+        @media (max-width: 640px) {
+            .top-bar { padding: 10px 12px; }
+            .left-section { gap: 10px; }
+            .title { font-size: 14px; }
+            .status-badge { padding: 4px 7px; font-size: 10px; }
+            .btn { padding: 8px 10px; }
+            .btn span { display: none; }
+            .right-section { gap: 6px; }
+            .terminal-container { height: calc(100vh - 60px); padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="top-bar">
+        <div class="left-section">
+            <div class="title"><i class="fas fa-terminal" aria-hidden="true"></i><span>SSH Terminal · {{ vps.container_name }}</span></div>
+            <div class="status-badge"><span class="dot"></span><span>READY</span></div>
+        </div>
+        <div class="right-section">
+            <a href="{{ url_for('vps_detail', vps_id=vps.id) }}" class="btn"><i class="fas fa-arrow-left" aria-hidden="true"></i><span>Back</span></a>
+        </div>
+    </header>
+
+    <main class="terminal-container">
+        <iframe id="terminalFrame" src="{{ request.url_root.rstrip('/') }}/terminal/{{ console_port }}/" title="Interactive VPS terminal" allowfullscreen></iframe>
+    </main>
+</body>
+</html>

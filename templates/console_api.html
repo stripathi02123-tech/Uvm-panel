@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ panel_name }} - Console: {{ vps.container_name }}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js"></script>
+    <style>
+        :root { color-scheme: dark; --bg: #080b10; --panel: #11161d; --line: #26313d; --muted: #8b98a8; --green: #65d48a; --blue: #74b9ff; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: radial-gradient(circle at top right, #172231 0, var(--bg) 42%); color: #e8eef5; font: 15px Consolas, "SFMono-Regular", monospace; }
+        .shell { width: min(1100px, 100%); margin: 0 auto; padding: 24px; }
+        header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+        .title { display: flex; align-items: center; gap: 12px; }
+        .title h1 { margin: 0; font-size: 18px; font-weight: 600; }
+        .title small { color: var(--muted); }
+        .actions { display: flex; gap: 8px; }
+        button, a { border: 1px solid var(--line); border-radius: 6px; background: #151d26; color: #dce8f3; padding: 9px 13px; font: inherit; text-decoration: none; cursor: pointer; }
+        button:hover, a:hover { border-color: var(--blue); color: white; }
+        .terminal { min-height: 68vh; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: #050709; box-shadow: 0 22px 55px #0008; }
+        .bar { display: flex; align-items: center; gap: 7px; padding: 12px 15px; border-bottom: 1px solid var(--line); background: var(--panel); color: var(--muted); }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: #efb45d; }
+        .dot.ready { background: var(--green); }
+        #terminal { flex: 1; min-height: 50vh; padding: 12px; overflow: hidden; }
+        .xterm { height: 100%; }
+        .welcome { color: var(--muted); }
+        .command { color: var(--blue); }
+        .error { color: #ff8c8c; }
+        form { display: flex; align-items: center; gap: 10px; padding: 13px 16px; border-top: 1px solid var(--line); background: var(--panel); }
+        .prompt { color: var(--green); }
+        input { min-width: 0; flex: 1; border: 0; outline: 0; background: transparent; color: white; font: inherit; }
+        .hint { margin-top: 10px; color: var(--muted); font-size: 12px; }
+        @media (max-width: 600px) { .shell { padding: 14px; } header { align-items: flex-start; flex-direction: column; } .terminal { min-height: 76vh; } }
+    </style>
+</head>
+<body>
+    <main class="shell">
+        <header>
+            <div class="title"><span aria-hidden="true">&gt;_</span><div><h1>{{ vps.container_name }}</h1><small>Port-free LXC terminal</small></div></div>
+            <div class="actions"><button type="button" id="clearButton" title="Clear terminal">Clear</button><a href="{{ url_for('vps_detail', vps_id=vps.id) }}">Back</a></div>
+        </header>
+        <section class="terminal" aria-label="VPS terminal">
+            <div class="bar"><span class="dot ready"></span><span id="status">Ready</span></div>
+            <div id="terminal" tabindex="0" aria-label="Interactive VPS terminal"></div>
+        </section>
+        <div class="hint">Commands are executed one at a time. Press Ctrl+L to clear the terminal.</div>
+    </main>
+    <script>
+        const status = document.getElementById('status');
+        const socket = io(window.location.origin, {transports: ['websocket', 'polling']});
+        let connected = false;
+        const term = new Terminal({
+            cursorBlink: true,
+            fontFamily: 'Consolas, "SFMono-Regular", monospace',
+            fontSize: 14,
+            scrollback: 5000,
+            theme: {background: '#050709', foreground: '#e8eef5', cursor: '#65d48a', selectionBackground: '#263f5c'}
+        });
+        term.open(document.getElementById('terminal'));
+
+        function clearTerminal() { term.clear(); term.focus(); }
+        document.getElementById('clearButton').addEventListener('click', clearTerminal);
+        document.addEventListener('keydown', event => {
+            if (event.ctrlKey && event.key.toLowerCase() === 'l') { event.preventDefault(); clearTerminal(); }
+        });
+        term.writeln('Connecting to {{ vps.container_name }}...');
+        socket.on('connect', () => socket.emit('console_connect', {vps_id: {{ vps.id }}}));
+        socket.on('console_connected', data => { connected = true; status.textContent = 'Connected'; term.writeln('\r\nConnected to ' + data.container + '\r\n'); term.focus(); });
+        socket.on('console_output', data => term.write(data));
+        socket.on('console_error', data => { connected = false; status.textContent = 'Error'; term.writeln('\r\n[Console error] ' + data.error + '\r\n'); });
+        socket.on('console_disconnected', () => { connected = false; status.textContent = 'Disconnected'; term.writeln('\r\n[Session disconnected]\r\n'); });
+        socket.on('disconnect', () => { connected = false; status.textContent = 'Disconnected'; });
+        term.onData(data => { if (connected) socket.emit('console_input', {vps_id: {{ vps.id }}, input: data}); });
+        window.addEventListener('beforeunload', () => socket.emit('console_disconnect', {vps_id: {{ vps.id }}}));
+    </script>
+</body>
+</html>
