@@ -539,6 +539,7 @@ echo "  Main File       : ${INSTALL_DIR}/uvm.py"
 echo "  Service         : ${SERVICE_NAME}"
 echo "  Log File        : ${LOG_FILE}"
 echo
+
 echo "  GitHub Repo     : ${GITHUB_USERNAME}/${GITHUB_REPO_NAME}"
 
 echo
